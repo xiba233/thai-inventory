@@ -7,7 +7,8 @@ async function exportFullBackup(){const value=await api('backup-export');downloa
 function renderBackup(parent){
  const intro=card('数据保存在您现在使用的浏览器','GitHub 提供固定网址，库存、采购和设置保存在本设备的这个浏览器里。导入的 Excel 和业务数据不会上传到 GitHub。');
  intro.append(notice('换电脑、换浏览器或清除网站数据前，请先下载完整备份。其他设备不会自动同步；需要在那台设备恢复备份。','info'));
- intro.append(el('p','最近保存：'+timestamp(inventoryStore.status.savedAt)+'；本地数据大小：'+num((inventoryStore.status.bytes||0)/1024,1)+' KB。关闭网页再打开会读取已保存的数据。'));
+ intro.append(el('p','保存方式：'+(inventoryStore.status.mode==='local'?'兼容保存':'标准保存')+'；最近保存：'+timestamp(inventoryStore.status.savedAt)+'；本地数据大小：'+num((inventoryStore.status.bytes||0)/1024,1)+' KB。关闭网页再打开会读取已保存的数据。'));
+ if(inventoryStore.status.mode==='local')intro.append(notice('标准保存不可用，已使用兼容保存。原因：'+inventoryStore.status.reason+'。兼容保存容量较小，请每天下载完整备份；不要清除网站数据。原标准存储里的数据不会被覆盖，若本页数量为空且你以前有数据，请恢复旧完整备份。','info'));
  parent.append(intro);
  const download=card('第一步：下载完整备份','备份包含库存、导入历史、SKU 周期、清仓状态、采购、出货与在途记录。表格的“导出筛选结果”只导出一部分，不是完整备份。');
  const b=button('下载完整备份',async()=>{b.disabled=true;try{await exportFullBackup();toast('完整备份已生成，请在浏览器下载列表中查看，并妥善保存。');}catch(e){toast(e.message,true);}finally{b.disabled=false;}},'primary');download.append(b,el('p','建议每次完成当天操作后备份一次。备份含您的业务数据，请保存在自己的文件夹，不要放进公开 GitHub 仓库。','muted'));parent.append(download);

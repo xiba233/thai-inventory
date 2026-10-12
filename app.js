@@ -62,11 +62,21 @@ function table(parent,rows,columns,options={}){
  toolbar.append(button("导出筛选结果",()=>downloadCSV((options.filename||"库存筛选结果")+".csv",columns.filter(c=>c.export!==false).map(c=>c.label),filtered.map(r=>columns.filter(c=>c.export!==false).map(c=>c.exportValue?c.exportValue(r):r[c.key])))));
  for(const control of [search,warehouse,risk,clearance,minStock,maxStock,minSales,maxSales])control?.addEventListener("input",draw);append(parent,toolbar,wrapper,count);draw();return {draw,getRows:()=>filtered};
 }
+function renderStartup(content){
+ const runtime=inventoryStore.runtime,failed=runtime.phase==='error';
+ const section=card(failed?'系统暂时无法读取数据':'正在打开库存系统');
+ const message=el('p',failed?runtime.error:runtime.message);message.id='loading-text';section.append(message);
+ if(failed){section.append(notice('请保留已有网站数据，不要清除缓存或网站数据来尝试修复。若提示存储被阻止，请使用普通浏览窗口，并在浏览器的网站设置中允许此网址保存设备数据。','info'));
+  const retry=button('重新读取数据',async()=>{retry.disabled=true;try{await refresh();}catch(e){render();toast(e.message,true);}},'primary');section.append(retry);
+ }else section.append(el('p','首次打开需要加载约 13 MB 运行组件，请稍候。可以先查看操作说明；加载完成后会自动显示库存。','muted'));
+ section.append(button('查看操作说明',()=>go('help')));content.append(section);
+ $('snapshot-meta').textContent=failed?'启动未完成 · 原有数据未清空':runtime.message;
+}
 function render(){
- if(!state){$("page-title").textContent=pages[page];for(const b of $("nav").children)b.classList.toggle("active",b.dataset.page===page);const content=$("content");content.replaceChildren();if(page==="help")renderHelp(content);else content.append(notice("浏览器运行组件尚未就绪。请检查网络后重新读取；可先查看操作说明。","error"),button("重新读取数据",()=>refresh().catch(e=>toast(e.message,true))),button("查看操作说明",()=>go("help")));return;}
+ if(!state){$("page-title").textContent=pages[page];for(const b of $("nav").children)b.classList.toggle("active",b.dataset.page===page);const content=$("content");content.replaceChildren();if(page==="help")renderHelp(content);else renderStartup(content);return;}
  $("page-title").textContent=pages[page];for(const b of $("nav").children)b.classList.toggle("active",b.dataset.page===page);
  const s=state.snapshot;$("snapshot-meta").replaceChildren(el("div",s?"最近成功导入："+timestamp(s.imported_at):"尚未导入库存文件"),el("div",s?"库存快照日期："+(s.snapshot_date||"未知 · 请核实数据时点"):"支持 XLSX 自动解析与重复导入"));
- const warnings=$("global-warnings");warnings.replaceChildren();const all=["数据保存在当前设备的这个浏览器。更换设备请使用‘备份与迁移’，不同设备不会自动同步。",...(state.warnings||[])];if(state.settings.assumed&&!all.some(x=>/暂定|假设/.test(x)))all.unshift("工厂 / 国内 / 跨境周期使用暂定假设参数。补货建议仅供运营决策，请在系统设置中确认真实周期。");if(s&&!s.snapshot_date&&!all.some(x=>/快照日期|时效|数据日期/.test(x)))all.unshift("库存快照日期未提供，无法确认时效。导入时间不是库存快照日期，也不是实时库存同步。");if(all.length){const n=el("div",null,"notice"),ul=el("ul");for(const message of [...new Set(all)])ul.append(el("li",message));n.append(ul);warnings.append(n);}
+ const warnings=$("global-warnings");warnings.replaceChildren();const all=["数据保存在当前设备的这个浏览器。更换设备请使用‘备份与迁移’，不同设备不会自动同步。",...(state.warnings||[])];if(inventoryStore.status.mode==='local')all.unshift('本浏览器已启用兼容保存，关闭网页后数据仍保留。标准存储暂不可用时无法读取其中的旧数据；如已有库存，请从完整备份恢复。请定期备份，并只在一个标签页维护。');if(state.settings.assumed&&!all.some(x=>/暂定|假设/.test(x)))all.unshift("工厂 / 国内 / 跨境周期使用暂定假设参数。补货建议仅供运营决策，请在系统设置中确认真实周期。");if(s&&!s.snapshot_date&&!all.some(x=>/快照日期|时效|数据日期/.test(x)))all.unshift("库存快照日期未提供，无法确认时效。导入时间不是库存快照日期，也不是实时库存同步。");if(all.length){const n=el("div",null,"notice"),ul=el("ul");for(const message of [...new Set(all)])ul.append(el("li",message));n.append(ul);warnings.append(n);}
  const content=$("content");content.replaceChildren();({overview:renderOverview,risk:renderRisk,replenishment:renderReplenishment,inventory:renderInventory,transit:renderTransit,purchase:renderPurchases,clearance:renderClearance,import:renderImport,settings:renderSettings,backup:renderBackup,help:renderHelp})[page](content);
 }
 function go(next){page=next;render();window.scrollTo(0,0);}
@@ -341,4 +351,6 @@ function undoPurchaseShipment(s){
 for(const [key,title]of Object.entries(pages)){const b=button("",()=>go(key));b.dataset.page=key;b.append(el("span",String(Object.keys(pages).indexOf(key)+1).padStart(2,"0"),"nav-number"),el("span",title));$("nav").append(b);}
 $("detail-close").addEventListener("click",()=>$("detail").close());
 $("detail").addEventListener("click",event=>{if(event.target===$("detail")){const b=$("detail").getBoundingClientRect();if(event.clientX<b.left||event.clientX>b.right||event.clientY<b.top||event.clientY>b.bottom)$("detail").close();}});
+window.addEventListener('inventory-runtime',()=>{if(!state&&page!=='help')render();});
+render();
 refresh().catch(e=>{render();toast(e.message,true);});
