@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>泰国站 · 库存与补货管理</title>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./help.js"></script>
+  <script defer src="./storage.js"></script>
+  <script defer src="./backup.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-icon">TH</span><div>泰国站运营<span>库存与补货管理</span></div></div>
+    <div class="nav-caption">日常运营</div>
+    <nav id="nav" aria-label="主导航"></nav>
+    <div class="sidebar-note">Excel 库存快照<br>GitHub Pages · 数据保存在浏览器<br><span>界面时间：Asia/Bangkok</span></div>
+  </aside>
+  <main>
+    <header><div><div class="eyebrow">泰国站库存运营</div><h1 id="page-title">运营总览</h1></div><div class="snapshot-meta" id="snapshot-meta">正在启动浏览器内计算…</div></header>
+    <div id="toast" role="status" aria-live="polite" hidden></div>
+    <div id="global-warnings"></div>
+    <div id="content" aria-live="polite"><section class="card"><h2>正在打开库存系统</h2><p id="loading-text">首次启动需要加载运行组件，请保持页面打开…</p><p class="muted">业务数据只保存在本浏览器；请定期下载完整备份。</p></section></div>
+    <footer>预测采用 7 / 15 / 30 天统计窗口估计销售速度；并非逐日销量预测。可售库存采用 Effective Stock，未再次扣减锁定库存。</footer>
+  </main>
+  <dialog id="detail"><div class="modal-head"><h2 id="detail-title">SKU 详情</h2><button id="detail-close" aria-label="关闭">✕</button></div><div id="detail-body"></div></dialog>
+</body>
+</html>
